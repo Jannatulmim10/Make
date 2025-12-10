@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TASKO BD — Earn by Tasks & Ads</title>
+
+<style>
+  :root{
+    --green:#0ea05d;
+    --dark-green:#0b6b43;
+    --card:#ffffff;
+    --bg:#e9f8ef;
+    --accent:#064b34;
+    --muted:#2d2d2d;
+    --yellow1:#ffe875;
+    --yellow2:#ffcf3f;
+    --yellow-dark:#c19900;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue";
+    background: linear-gradient(180deg,var(--bg), #dff6e8);
+    min-height:100vh;
+    padding:12px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .container{width:100%;max-width:460px;}
+
+  header{
+    background: linear-gradient(90deg,var(--green),var(--dark-green));
+    color:white;
+    padding:14px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 8px 24px rgba(0,0,0,0.15);
+  }
+
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{
+    width:48px;height:48px;border-radius:10px;
+    background:rgba(255,255,255,0.18);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:700;
+  }
+
+  .balance{
+    background:rgba(255,255,255,0.22);
+    padding:6px 10px;border-radius:10px;text-align:center;
+  }
+
+  .withdraw-btn{
+    padding:7px 12px;
+    border:none;border-radius:10px;
+    font-weight:700;
+    background:white;color:var(--accent);
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+    cursor:pointer;
+  }
+
+  .card{
+    background:white;
+    padding:16px;
+    margin-top:14px;
+    border-radius:12px;
+    box-shadow:0 5px 18px rgba(0,0,0,0.08);
+  }
+
+  .ads{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+
+  .ad-btn{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px;border-radius:14px;
+    background:linear-gradient(90deg,var(--yellow1),var(--yellow2));
+    border:2px solid var(--yellow-dark);
+    font-size:15px;font-weight:700;cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.12);
+    transition:0.2s;
+  }
+
+  .ad-btn:active{transform:scale(0.96)}
+
+  .ad-meta{font-size:12px;color:#4c3e00;}
+  .small{font-size:12px;color:#4c3e00;}
+
+  footer{text-align:center;margin-top:14px;font-size:12px;color:#345}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="logo">TB</div>
+      <div>
+        <h1 style="font-size:18px;margin:0">TASKO BD</h1>
+        <div style="font-size:12px;opacity:0.95">আপনার আয়ের পথে </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="balance">
+        <span style="font-size:12px">ব্যালেন্স</span>
+        <b id="balanceDisplay">৳0</b>
+      </div>
+      <button id="withdrawBtn" class="withdraw-btn">Withdraw</button>
+    </div>
+  </header>
+
+  <!-- TASKS -->
+  <section class="card">
+    <h3 style="margin:0 0 6px 0">Available Tasks</h3>
+
+    <div class="ads">
+      <div class="ad-btn" id="task1">
+        <div>
+          📝 টাস্ক কমপ্লিট করুন  
+          <div class="ad-meta">৳50 • দিনে 2 বার</div>
+        </div>
+        <div class="small" id="task1-count">বাকি: 2</div>
+      </div>
+
+      <div class="ad-btn" id="task2">
+        <div>
+          🎬 বিজ্ঞাপন দেখুন  
+          <div class="ad-meta">৳20 • দিনে 10 বার</div>
+        </div>
+        <div class="small" id="task2-count">বাকি: 10</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK MESSAGE -->
+  <section class="card">
+    <h3 style="margin-top:0">Quick Message</h3>
+    <div id="messageBox" style="padding:10px;border-radius:10px;background:#f0fff6;color:#083b23;">
+      Welcome! নিয়ম মেনে কাজ করুন। উইথড্র রিকুয়েস্ট পাঠানোর ১৫ মিনিটের মধ্যে পেমেন্ট করা হবে।
+    </div>
+
+    <button id="openAdmin"
+      style="margin-top:12px;padding:10px;border:2px dashed var(--accent);background:white;border-radius:10px;font-weight:700;color:var(--accent);width:100%">
+      Admin Panel
+    </button>
+  </section>
+
+  <footer>© TASKO BD — Premium Mobile UI</footer>
+
+</div>
+
+
+<!-- MAIN SITE SCRIPT -->
+<script>
+const REWARD = { task1:50, task2:20 };
+const LIMIT = { task1:2, task2:10 };
+
+let balance = Number(localStorage.getItem("bal") || 0);
+let clicks = JSON.parse(localStorage.getItem("clk") || '{"task1":[],"task2":[]}');
+let links = JSON.parse(localStorage.getItem("tasko_links") || '{"task1":"","task2":"","withdraw":""}');
+
+function updateUI(){
+  document.getElementById("balanceDisplay").textContent = "৳" + balance;
+
+  ["task1","task2"].forEach(id=>{
+    const recent = clicks[id].filter(t=>t >= Date.now()-86400000);
+    clicks[id] = recent;
+    document.getElementById(id+"-count").textContent = "বাকি: " + (LIMIT[id] - recent.length);
+  });
+
+  localStorage.setItem("clk",JSON.stringify(clicks));
+}
+updateUI();
+
+function handle(task){
+  const recent = clicks[task].filter(t=>t >= Date.now()-86400000);
+  if(recent.length >= LIMIT[task]) return messageBox.textContent="আজকের লিমিট শেষ!";
+  if(!links[task]) return messageBox.textContent="Admin লিংক সেট করেননি!";
+
+  recent.push(Date.now());
+  clicks[task] = recent;
+  balance += REWARD[task];
+  localStorage.setItem("bal",balance);
+
+  messageBox.textContent = "সফল! +৳" + REWARD[task];
+  updateUI();
+  window.open(links[task], "_blank");
+}
+
+document.getElementById("task1").onclick = ()=>handle("task1");
+document.getElementById("task2").onclick = ()=>handle("task2");
+
+document.getElementById("withdrawBtn").onclick = ()=>{
+  if(!links.withdraw) return alert("Withdraw লিংক দেয়া হয়নি!");
+  window.open(links.withdraw,"_blank");
+};
+
+
+/* -------------------------
+   ADMIN PANEL ACCESS (WITH PASSWORD)
+--------------------------*/
+
+document.getElementById("openAdmin").onclick = ()=>{
+  let pass = prompt("Enter Admin Password:");
+
+  if(pass === "545153"){
+      window.location.href = "#adminPanel";
+      document.getElementById("adminBox").style.display = "block";
+  } else {
+      alert("Wrong Password!");
+  }
+};
+</script>
+
+<!-- ==========================
+     ADMIN PANEL (HIDDEN INSIDE SAME PAGE)
+========================== -->
+<div id="adminPanel"></div>
+
+<div id="adminBox" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:#eef7f1;
+  padding:20px;
+  overflow:auto;
+">
+  <div style="
+    max-width:420px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.08);
+  ">
+    <h2 style="text-align:center;color:#0ea05d;margin-top:0;">TASKO BD — Admin Panel</h2>
+
+    <label>Task 1 Link:</label>
+    <input id="inputTask1">
+
+    <label>Task 2 Link:</label>
+    <input id="inputTask2">
+
+    <label>Withdraw Link:</label>
+    <input id="inputWithdraw">
+
+    <button id="saveAdmin" style="background:#0ea05d;color:white;padding:12px;border:none;border-radius:8px;font-weight:bold;width:100%;margin-top:10px;">
+      Save Links
+    </button>
+
+    <button id="clearAdmin" style="background:#c82333;color:white;padding:12px;border:none;border-radius:8px;font-weight:bold;width:100%;margin-top:10px;">
+      Clear All
+    </button>
+
+    <div id="msgBox" style="display:none;margin-top:15px;padding:10px;border-radius:6px;background:#eafff4;color:#0b6b43;text-align:center;">
+      Saved!
+    </div>
+  </div>
+</div>
+
+<script>
+/* ADMIN PANEL SCRIPT */
+
+let adminLinks = JSON.parse(localStorage.getItem("tasko_links") || '{"task1":"","task2":"","withdraw":""}');
+
+inputTask1.value = adminLinks.task1;
+inputTask2.value = adminLinks.task2;
+inputWithdraw.value = adminLinks.withdraw;
+
+saveAdmin.onclick = ()=>{
+  adminLinks.task1 = inputTask1.value;
+  adminLinks.task2 = inputTask2.value;
+  adminLinks.withdraw = inputWithdraw.value;
+
+  localStorage.setItem("tasko_links", JSON.stringify(adminLinks));
+  msgBox.textContent = "Links Updated Successfully!";
+  msgBox.style.display = "block";
+};
+
+clearAdmin.onclick = ()=>{
+  localStorage.removeItem("tasko_links");
+  inputTask1.value = "";
+  inputTask2.value = "";
+  inputWithdraw.value = "";
+
+  msgBox.textContent = "All Links Cleared!";
+  msgBox.style.display = "block";
+};
+</script>
+
+</body>
+</html>
